@@ -1,18 +1,19 @@
 package com.study.mwlee.realestate
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.study.mwlee.realestate.ui.main.MainFragment
+import androidx.fragment.app.FragmentActivity
+import com.naver.maps.map.MapFragment
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main_activity)
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.container, MainFragment.newInstance())
-                .commitNow()
-        }
+
+        val fm = supportFragmentManager
+        val mapFragment = fm.findFragmentById(R.id.map) as MapFragment?
+            ?: MapFragment.newInstance().also {
+                fm.beginTransaction().add(R.id.map, it).commit()
+            }
     }
 }
