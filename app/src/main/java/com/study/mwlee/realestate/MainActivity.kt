@@ -10,7 +10,8 @@ import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.MarkerIcons
-import com.study.mwlee.realestate.network.AptTradeResponse
+import com.study.mwlee.realestate.network.AptResponse
+import com.study.mwlee.realestate.network.GeocodingResponse
 import com.study.mwlee.realestate.network.RetrofitClient
 import com.study.mwlee.realestate.preference.SharedManager
 import com.study.mwlee.realestate.room.AptDatabase
@@ -49,18 +50,18 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
             // 실거래가 호출
             Log.e("MainActivity", "request getAptTrade")
             // TODO 현재 날짜가 고정임 (3군데 수정 필요 - 프리퍼런스, 레트로핏)
-            RetrofitClient.service.getAptRent(BuildConfig.KEY_APT, "41117", "202106")
-                .enqueue(object : Callback<AptTradeResponse> {
+            RetrofitClient.aptService.getAptRent(BuildConfig.KEY_APT, "41117", "202106")
+                .enqueue(object : Callback<AptResponse> {
                     override fun onFailure(
-                        call: Call<AptTradeResponse>,
+                        call: Call<AptResponse>,
                         t: Throwable
                     ) {
                         Log.e("MainActivity", t.toString())
                     }
 
                     override fun onResponse(
-                        call: Call<AptTradeResponse>,
-                        response: Response<AptTradeResponse>
+                        call: Call<AptResponse>,
+                        response: Response<AptResponse>
                     ) {
                         sharedManager.saveLastUpdateDate("20210615")
                         // DB 에 저장
@@ -99,6 +100,29 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
             Log.e("MainActivity", "coroutine context db size= " + aptList?.size.toString())
         }
+
+        // 주소 -> 좌표 변환
+        RetrofitClient.geocodingService.getGeocoding("매탄동 176")
+            .enqueue(object : Callback<GeocodingResponse> {
+                override fun onFailure(
+                    call: Call<GeocodingResponse>,
+                    t: Throwable
+                ) {
+                    Log.e("MainActivity", t.toString())
+                }
+
+                override fun onResponse(
+                    call: Call<GeocodingResponse>,
+                    response: Response<GeocodingResponse>
+                ) {
+                    Log.e(
+                        "MainActivity",
+                        "x = " + response.body()?.addresses?.get(0)?.x + " y = " + response.body()?.addresses?.get(
+                            0
+                        )?.y
+                    )
+                }
+            })
     }
 
     @UiThread
@@ -109,8 +133,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
         naverMap.moveCamera(cameraUpdate)
 
         val marker = Marker()
-
-        marker.position = LatLng(37.24720159, 127.06283678)
+        marker.position = LatLng(37.2711804, 127.0397250)
         marker.icon = MarkerIcons.GRAY
         marker.map = naverMap
         marker.setOnClickListener { overlay ->

@@ -6,7 +6,7 @@ import com.tickaroo.tikxml.annotation.Xml
 
 
 @Xml(name = "response")
-class AptTradeResponse(
+class AptResponse(
     @Element
     val header: Header,
     @Element
