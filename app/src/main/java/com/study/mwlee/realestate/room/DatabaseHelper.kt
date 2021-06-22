@@ -5,21 +5,22 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [AptEntity::class], version = 1)
-abstract class AptDatabase : RoomDatabase() {
+@Database(entities = [AptEntity::class, LocationEntity::class], version = 1)
+abstract class DatabaseHelper : RoomDatabase() {
 
     abstract fun getAptDao(): AptDao
+    abstract fun getLocationDao(): LocationDao
 
     companion object {
-        private var INSTANCE: AptDatabase? = null
+        private var INSTANCE: DatabaseHelper? = null
 
-        fun getInstance(context: Context): AptDatabase? {
+        fun getInstance(context: Context): DatabaseHelper? {
             if (INSTANCE == null) {
-                synchronized(AptDatabase::class) {
+                synchronized(DatabaseHelper::class) {
                     INSTANCE = Room.databaseBuilder(
                         context.applicationContext,
-                        AptDatabase::class.java,
-                        "apt.db"
+                        DatabaseHelper::class.java,
+                        "real_estate.db"
                     ).build()
                 }
             }

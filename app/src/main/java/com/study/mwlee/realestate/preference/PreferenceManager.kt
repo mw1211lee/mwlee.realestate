@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import com.study.mwlee.realestate.preference.PreferenceHelper.set
 import com.study.mwlee.realestate.preference.PreferenceHelper.get
 
-class SharedManager(context: Context) {
+class PreferenceManager(context: Context) {
     private val prefs: SharedPreferences = PreferenceHelper.defaultPrefs(context)
 
     fun saveLastUpdateDate(date: String) {

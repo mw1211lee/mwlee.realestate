@@ -29,7 +29,10 @@ class AptEntity(
 
     /* Rent */
     val deposit: String,
-    val monthlyRent: String
+    val monthlyRent: String,
+
+    /* Location */
+    val dongPlusJibun: String
 ) {
     constructor(it: Item) : this(
         0, it.거래금액?.isNotEmpty() ?: false,
@@ -47,6 +50,7 @@ class AptEntity(
         it.해제여부 ?: "",
         it.해제사유발생일 ?: "",
         it.보증금액 ?: "",
-        it.월세금액 ?: ""
+        it.월세금액 ?: "",
+        (it.법정동 ?: "").trim() + " " + (it.지번 ?: "").trim()
     )
 }
