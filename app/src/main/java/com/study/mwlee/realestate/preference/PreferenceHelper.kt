@@ -21,6 +21,7 @@ object PreferenceHelper {
             is Boolean -> edit { it.putBoolean(key, value) }
             is Float -> edit { it.putFloat(key, value) }
             is Long -> edit { it.putLong(key, value) }
+            is Double -> edit { it.putLong(key, java.lang.Double.doubleToRawLongBits(value)) }
             else -> throw UnsupportedOperationException("Error")
         }
     }
@@ -33,6 +34,7 @@ object PreferenceHelper {
             is Boolean -> getBoolean(key, defaultValue as? Boolean ?: false) as T
             is Float -> getFloat(key, defaultValue as? Float ?: -1f) as T
             is Long -> getLong(key, defaultValue as? Long ?: -1) as T
+            is Double -> java.lang.Double.longBitsToDouble(getLong(key, defaultValue as? Long ?: java.lang.Double.doubleToRawLongBits(-1.0))) as T
             else -> throw UnsupportedOperationException("Error")
         }
     }
