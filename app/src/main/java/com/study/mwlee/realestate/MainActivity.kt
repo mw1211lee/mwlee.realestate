@@ -24,6 +24,9 @@ import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : FragmentActivity(), OnMapReadyCallback {
@@ -34,6 +37,8 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
     private val preferenceManager: PreferenceManager by lazy { PreferenceManager(this) }
     private var aptList: List<AptEntity>? = null
     private var map: NaverMap? = null
+    private var requestCount = 0
+    private var responseCount = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,39 +81,78 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
     }
 
     private fun checkRealEstateData() {
-        if (preferenceManager.getLastUpdateDate().isEmpty() || preferenceManager.getLastUpdateDate() < "20210615") {
-            // 실거래가 호출
+        val calendarInstance = Calendar.getInstance()
+        val currentDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(calendarInstance.time)
+
+        if (preferenceManager.getLastUpdateDate().isEmpty() || preferenceManager.getLastUpdateDate() < currentDate) {
+            // 실거래가 호출 (최근 3개월)
             Log.e(tag, "request get apt data")
-            // TODO 현재 날짜가 고정임 (3군데 수정 필요 - 프리퍼런스, 레트로핏)
-            RetrofitClient.aptService.getAptTrade(BuildConfig.KEY_APT, "41117", "202106").enqueue(object : Callback<AptResponse> {
-                override fun onFailure(call: Call<AptResponse>, t: Throwable) {
-                    Log.e(tag, t.toString())
-                }
 
-                override fun onResponse(call: Call<AptResponse>, response: Response<AptResponse>) {
-                    preferenceManager.saveLastUpdateDate("20210615")
-                    Log.e(tag, "retrofit context response size= " + response.body()?.body?.items?.item?.size.toString())
+            // 1~2달전
+            for (i in 0..1) {
+                calendarInstance.add(Calendar.MONTH, -1)
+                val year = calendarInstance.get(Calendar.YEAR)
+                val month = calendarInstance.get(Calendar.MONTH) + 1
+                val beforeDate = SimpleDateFormat("yyyyMM", Locale.getDefault()).format(calendarInstance.time)
 
-                    // DB 에 저장
-                    val aptEntityList = ArrayList<AptEntity>()
-                    response.body()?.body?.items?.item?.forEach {
-                        val aptEntity = AptEntity(it)
-                        aptEntityList.add(aptEntity)
-                    }
-
-                    CoroutineScope(Dispatchers.IO).launch {
-                        DatabaseHelper.getInstance(baseContext)?.getAptDao()?.insert(aptEntityList)
-
-                        launch(Dispatchers.Main) { checkRealEstateData() }
+                CoroutineScope(Dispatchers.IO).launch {
+                    val count = DatabaseHelper.getInstance(baseContext)?.getAptDao()?.getAptMonthData(year, month, 41117)
+                    if (count != null && count == 0) {
+                        launch(Dispatchers.Main) {
+                            requestCount++
+                            RetrofitClient.aptService.getAptTrade(BuildConfig.KEY_APT, "41117", beforeDate).enqueue(aptResponse)
+                        }
                     }
                 }
-            })
+            }
+
+            // 이번달
+            requestCount++
+            RetrofitClient.aptService.getAptTrade(BuildConfig.KEY_APT, "41117", currentDate.substring(0, 6)).enqueue(aptResponse)
         } else {
             CoroutineScope(Dispatchers.IO).launch {
                 aptList = DatabaseHelper.getInstance(baseContext)?.getAptDao()?.getAptAllData()
                 Log.e(tag, "coroutine context apt db size= " + aptList?.size.toString())
 
                 launch(Dispatchers.Main) { checkLocation() }
+            }
+        }
+    }
+
+    private val aptResponse = object : Callback<AptResponse> {
+        override fun onFailure(call: Call<AptResponse>, t: Throwable) {
+            responseCount++
+            Log.e(tag, t.toString())
+        }
+
+        override fun onResponse(call: Call<AptResponse>, response: Response<AptResponse>) {
+            responseCount++
+            // DB 에 저장
+            val aptEntityList = ArrayList<AptEntity>()
+            response.body()?.body?.items?.item?.forEach {
+                val aptEntity = AptEntity(it)
+                aptEntityList.add(aptEntity)
+            }
+
+            // 이번달 요청일 경우에만 프리퍼런스에 저장한다
+            val requestDate = call.request().url.queryParameter("DEAL_YMD")
+            val calendarInstance = Calendar.getInstance()
+            val currentDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(calendarInstance.time)
+            val simpleCurrentDate = currentDate.substring(0, 6)
+            if (requestDate == simpleCurrentDate) {
+                preferenceManager.saveLastUpdateDate(currentDate)
+            }
+            Log.e(tag, "retrofit context response size= " + response.body()?.body?.items?.item?.size.toString() + "(" + requestDate + ")")
+
+            CoroutineScope(Dispatchers.IO).launch {
+                DatabaseHelper.getInstance(baseContext)?.getAptDao()?.insert(aptEntityList)
+
+                launch(Dispatchers.Main) {
+                    // 마지막 요청 결과가 왔을 경우 다음 로직을 수행한다
+                    if (requestCount == responseCount) {
+                        checkRealEstateData()
+                    }
+                }
             }
         }
     }
