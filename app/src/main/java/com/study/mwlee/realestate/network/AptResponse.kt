@@ -34,7 +34,7 @@ class Body(
 @Xml(name = "items")
 class Items(
     @Element
-    val item: List<Item>
+    val item: List<Item>?
 )
 
 @Suppress("NonAsciiCharacters")

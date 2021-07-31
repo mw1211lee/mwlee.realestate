@@ -7,8 +7,9 @@ import androidx.annotation.UiThread
 import androidx.fragment.app.FragmentActivity
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
+import com.naver.maps.map.overlay.Align
 import com.naver.maps.map.overlay.Marker
-import com.naver.maps.map.util.MarkerIcons
+import com.naver.maps.map.overlay.OverlayImage
 import com.study.mwlee.realestate.databinding.MainActivityBinding
 import com.study.mwlee.realestate.network.AptResponse
 import com.study.mwlee.realestate.network.GeocodingResponse
@@ -27,6 +28,7 @@ import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.roundToInt
 
 
 class MainActivity : FragmentActivity(), OnMapReadyCallback {
@@ -220,15 +222,27 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
                 addressDBList?.forEach {
                     val marker = Marker()
                     marker.position = LatLng(it.latitude!!.toDouble(), it.longitude!!.toDouble())
-                    marker.icon = MarkerIcons.GRAY
+                    marker.icon = OverlayImage.fromResource(R.drawable.outline_home_black) // MarkerIcons.GRAY
+                    marker.iconTintColor = getColor(R.color.main_home_icon)
+                    marker.map = map
+                    marker.width = marker.icon.getBitmap(this@MainActivity)?.width?.times(1.6f)?.toInt() ?: Marker.SIZE_AUTO
+                    marker.height = marker.icon.getBitmap(this@MainActivity)?.height?.times(1.6f)?.toInt() ?: Marker.SIZE_AUTO
+                    marker.setCaptionAligns(Align.Center)
+                    marker.captionText = aptList?.find { aptIt -> aptIt.dongPlusJibun == it.address }?.apartmentName ?: it.address
+                    marker.captionTextSize = 10f
+                    marker.captionColor = getColor(R.color.main_home_title)
+                    marker.captionHaloColor = getColor(R.color.main_home_title)
                     val selectItem = aptList?.maxByOrNull { aptIt -> aptIt.dongPlusJibun == it.address }
                     selectItem?.let { aptIt ->
-                        marker.captionText = if (aptIt.isTrade) aptIt.dealAmount else aptIt.deposit
+                        val amount: Double = if (aptIt.isTrade) aptIt.dealAmount.replace(",", "").toDouble() else aptIt.deposit.replace(",", "").toDouble()
+                        marker.subCaptionText = ((amount / 1000).roundToInt() / 10f).toString() + "억"
                     }
-                    marker.map = map
-                    marker.subCaptionText = aptList?.find { aptIt -> aptIt.dongPlusJibun == it.address }?.apartmentName ?: it.address
+                    marker.subCaptionTextSize = 13f
+                    marker.subCaptionColor = getColor(R.color.white)
+                    marker.subCaptionHaloColor = getColor(R.color.white)
                     marker.setOnClickListener {
                         val intent = Intent(this@MainActivity, DetailActivity::class.java)
+                        intent.putExtra("apartmentName", marker.captionText)
                         startActivity(intent)
                         // 이벤트 소비, OnMapClick 이벤트는 발생하지 않음
                         true

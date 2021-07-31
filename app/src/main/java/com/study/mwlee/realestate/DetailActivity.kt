@@ -15,6 +15,10 @@ class DetailActivity : AppCompatActivity() {
                 .replace(R.id.container, DetailFragment.newInstance())
                 .commitNow()
         }
+
+        intent.extras?.let {
+            title = it.getString("apartmentName")
+        }
     }
 
 }

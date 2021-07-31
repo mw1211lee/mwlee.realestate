@@ -2,7 +2,6 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.main.DetailFragment">
@@ -22,47 +21,134 @@
             android:layout_marginTop="?attr/actionBarSize"
             android:orientation="vertical">
 
-            <FrameLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="150dp"
+                android:layout_height="wrap_content"
                 android:background="@color/teal_200">
 
-            </FrameLayout>
+                <androidx.appcompat.widget.AppCompatSpinner
+                    android:layout_width="wrap_content"
+                    android:layout_height="50dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_margin="20dp"
+                    android:visibility="gone" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/notUseAverageMonth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/parentTrade"
+                    android:layout_marginStart="20dp"
+                    android:text="@string/average_trade_month" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/textAverageMonth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/notUseAverageMonth"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginBottom="20dp"
+                    android:textSize="36dp" />
+
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:id="@+id/parentTrade"
+                    android:layout_width="100dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="20dp"
+                    android:background="@color/detail_view_division_back"
+                    android:orientation="horizontal">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/textTrade"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_margin="3dp"
+                        android:layout_weight="1"
+                        android:background="@color/purple_200"
+                        android:gravity="center"
+                        android:text="@string/trade" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/textRent"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_margin="3dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/rent" />
+
+                </androidx.appcompat.widget.LinearLayoutCompat>
+
+            </RelativeLayout>
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/containerTab"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/teal_700" />
 
             <FrameLayout
+                android:id="@+id/containerChart"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_height="250dp"
+                android:background="@color/teal_700" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/textLastCheckTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/parentTrade"
+                android:layout_marginStart="20dp" />
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/linearTradeListLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="20dp"
+                android:animateLayoutChanges="true"
+                android:orientation="vertical" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/textMoreShow"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:layout_margin="15dp"
+                android:background="@drawable/view_round_corner_20"
+                android:drawableEnd="@drawable/view_detail_more_show_arrow"
+                android:paddingEnd="10dp"
+                android:paddingStart="20dp"
+                android:gravity="center"
+                android:text="@string/view_more_show"
+                android:visibility="visible" />
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_margin="20dp"
+                android:background="@color/purple_200"
+                android:drawableLeft="@drawable/view_detail_new_trade_alarm"
+                android:text="@string/new_real_trade_alarm"
+                android:textSize="22dp" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
                 android:background="@color/teal_700">
 
-            </FrameLayout>
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/detailLastMonthData"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_margin="10dp"
+                    android:text="TEST234"
+                    android:textColor="@android:color/black"
+                    android:textSize="16dp" />
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:background="@color/teal_200">
-
-            </FrameLayout>
-
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:background="@color/teal_700">
-
-            </FrameLayout>
-
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:background="@color/teal_200">
-
-            </FrameLayout>
-
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:background="@color/teal_700">
-
-            </FrameLayout>
+            </RelativeLayout>
         </androidx.appcompat.widget.LinearLayoutCompat>
 
     </ScrollView>

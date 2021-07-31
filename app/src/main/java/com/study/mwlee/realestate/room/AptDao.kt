@@ -11,6 +11,9 @@ interface AptDao {
     @Query("SELECT * FROM apt")
     suspend fun getAptAllData(): List<AptEntity>
 
+    @Query("SELECT * FROM apt WHERE apartmentName = :aptName ORDER BY dealYear DESC, dealMonth DESC, dealDay DESC")
+    suspend fun getAptData(aptName: String): List<AptEntity>
+
     @Query("SELECT COUNT(*) FROM apt WHERE dealYear = :year AND dealMonth = :month AND regionalCode = :regionalCode")
     suspend fun getAptMonthData(year: Int, month: Int, regionalCode: Int): Int
 

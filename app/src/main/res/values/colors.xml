@@ -7,4 +7,15 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="white_50">#80FFFFFF</color>
+
+    <color name="main_home_icon">#5963D9</color>
+    <color name="main_home_title">#BBBFEF</color>
+
+    <color name="detail_view_line">#F2F2F2</color>
+    <color name="detail_view_trade_item_text">#484848</color>
+    <color name="detail_view_trade_item_header_back">#FAFAFA</color>
+    <color name="detail_view_more_show_back">#CECFDC</color>
+    <color name="detail_view_more_show_arrow">#7F7E92</color>
+    <color name="detail_view_division_back">#ECECEC</color>
 </resources>
