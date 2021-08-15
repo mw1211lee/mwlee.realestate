@@ -4,7 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -17,12 +20,13 @@ import com.study.mwlee.realestate.room.DatabaseHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.*
 
 
-class DetailFragment : Fragment() {
+class DetailFragment(private val aptName: String) : Fragment(), View.OnClickListener {
 
     companion object {
-        fun newInstance() = DetailFragment()
+        fun newInstance(aptName: String) = DetailFragment(aptName)
     }
 
     private lateinit var binding: DetailFragmentBinding
@@ -32,10 +36,10 @@ class DetailFragment : Fragment() {
     private val tradeShowCountMax = 5
     private var tradeCurrentCount = 0
 
-    private val chartFragment1 = ChartFragment()
-    private val chartFragment2 = ChartFragment()
-    private val chartFragment3 = ChartFragment()
-    private val chartFragment4 = ChartFragment()
+    private val chartFragment1 = ChartFragment(aptName)
+    private val chartFragment2 = ChartFragment(aptName)
+    private val chartFragment3 = ChartFragment(aptName)
+    private val chartFragment4 = ChartFragment(aptName)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = DetailFragmentBinding.inflate(layoutInflater, container, false)
@@ -45,16 +49,30 @@ class DetailFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(this).get(DetailViewModel::class.java)
-        // Observer를 생성한 뒤 UI에 업데이트 시켜 줍니다.
-        val testObserver = Observer<Int> { updateValue ->
-            // 현재 MainActivity에는 TextView가 하나만 존재합니다.
-            // 다른 데이터를 받는 UI 컴포넌트가 있다면 같이 세팅 해줍니다.
-            binding.detailLastMonthData.text = updateValue.toString()
+
+        // Trade 값이 변경될 경우 같이 변경되어야 하는 UI
+        val isTradeObserver = Observer<Boolean> { updateValue ->
+            if (updateValue) {
+                // 매매(Trade) 클릭
+                binding.textTrade.setTextColor(ResourcesCompat.getColor(resources, R.color.white, context?.theme))
+                binding.textTrade.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_200, context?.theme))
+                binding.textRent.setTextColor(ResourcesCompat.getColor(resources, R.color.purple_200, context?.theme))
+                binding.textRent.setBackgroundColor(ResourcesCompat.getColor(resources, android.R.color.transparent, context?.theme))
+            } else {
+                // 전월세(Rent) 클릭
+                binding.textTrade.setTextColor(ResourcesCompat.getColor(resources, R.color.purple_200, context?.theme))
+                binding.textTrade.setBackgroundColor(ResourcesCompat.getColor(resources, android.R.color.transparent, context?.theme))
+                binding.textRent.setTextColor(ResourcesCompat.getColor(resources, R.color.white, context?.theme))
+                binding.textRent.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_200, context?.theme))
+            }
         }
 
-        // LiveData를 Observer를 이용해 관찰하고
-        // 현재 Activity 및 Observer를 LifecycleOwner로 전달합니다.
-        viewModel.average.observe(viewLifecycleOwner, testObserver)
+        // 관찰할 데이터에 옵저버 등록
+        viewModel.isTrade.observe(viewLifecycleOwner, isTradeObserver)
+
+        // 전월세 이벤트 등록
+        binding.textTrade.setOnClickListener(this)
+        binding.textRent.setOnClickListener(this)
 
         // Tab 셋팅 - Chart
         activity?.supportFragmentManager?.beginTransaction()?.replace(binding.containerChart.id, chartFragment1)?.commit()
@@ -64,11 +82,10 @@ class DetailFragment : Fragment() {
         binding.containerTab.addTab(binding.containerTab.newTab().setText("C"))
         binding.containerTab.addTab(binding.containerTab.newTab().setText("D"))
 
+        // Tab 선택 이벤트
         binding.containerTab.addOnTabSelectedListener(object : OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
-                val position = tab.position
-                var selected: ChartFragment? = null
-                selected = when (position) {
+                val selected = when (tab.position) {
                     0 -> chartFragment1
                     1 -> chartFragment2
                     2 -> chartFragment3
@@ -82,28 +99,45 @@ class DetailFragment : Fragment() {
             override fun onTabReselected(tab: TabLayout.Tab) {}
         })
 
-        binding.textLastCheckTime.text = String.format(getString(R.string.last_check_time), 2)
-
-        // 실거래가 셋팅
         makeTradeData(true, null)
         activity?.let {
-            it.intent.extras?.let { extra ->
-                val aptName = extra.getString("apartmentName")
-                aptName?.let { apartmentName ->
-                    CoroutineScope(Dispatchers.IO).launch {
-                        tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(apartmentName)
-                        launch(Dispatchers.Main) {
-                            showNextTradeInfo()
+            CoroutineScope(Dispatchers.IO).launch {
+                // 평형 가져오기 (데이터)
+                // TODO
+                val areaData = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptAreaData(aptName)
+
+                // 실거래가 셋팅 (데이터)
+                tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(aptName)
+                launch(Dispatchers.Main) {
+                    // 평형 가져오기 (UI)
+                    // TODO
+                    areaData?.let {
+                        binding.spinnerArea.adapter = context?.let { cnt ->
+                            ArrayAdapter(cnt, android.R.layout.simple_spinner_dropdown_item, it.sorted())
                         }
                     }
+
+                    // 실거래가 셋팅 (UI)
+                    showNextTradeInfo()
                 }
             }
+        }
+        binding.spinnerArea.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(adapterView: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                // TODO 스피너 선택한 데이터만 보여주기
+                binding.textAverageMonth.text = adapterView?.selectedItem.toString()
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
 
         // 더보기 이벤트
         binding.textMoreShow.setOnClickListener {
             showNextTradeInfo()
         }
+
+        // 기타 설정
+        binding.textLastCheckTime.text = String.format(getString(R.string.last_check_time), 2)
     }
 
     private fun showNextTradeInfo() {
@@ -112,6 +146,9 @@ class DetailFragment : Fragment() {
                 for (i in tradeCurrentCount until (tradeCurrentCount + tradeShowCountMax)) {
                     if (i < it.size) {
                         makeTradeData(false, it[i])
+                    } else {
+                        binding.textMoreShow.visibility = View.GONE
+                        return@let
                     }
                 }
                 tradeCurrentCount = binding.linearTradeListLayout.childCount - 1
@@ -146,6 +183,13 @@ class DetailFragment : Fragment() {
             }
 
             binding.linearTradeListLayout.addView(item)
+        }
+    }
+
+    override fun onClick(view: View?) {
+        when (view?.id) {
+            R.id.textTrade -> viewModel.isTrade.value = true
+            R.id.textRent -> viewModel.isTrade.value = false
         }
     }
 

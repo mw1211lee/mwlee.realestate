@@ -147,6 +147,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
             Log.e(tag, "retrofit context response size= " + response.body()?.body?.items?.item?.size.toString() + "(" + requestDate + ")")
 
             CoroutineScope(Dispatchers.IO).launch {
+                // TODO 중복 데이터 쌓이는 문제 발견
                 DatabaseHelper.getInstance(baseContext)?.getAptDao()?.insert(aptEntityList)
 
                 launch(Dispatchers.Main) {
@@ -231,7 +232,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
                     marker.captionText = aptList?.find { aptIt -> aptIt.dongPlusJibun == it.address }?.apartmentName ?: it.address
                     marker.captionTextSize = 10f
                     marker.captionColor = getColor(R.color.main_home_title)
-                    marker.captionHaloColor = getColor(R.color.main_home_title)
+                    marker.captionHaloColor = getColor(android.R.color.transparent)
                     val selectItem = aptList?.maxByOrNull { aptIt -> aptIt.dongPlusJibun == it.address }
                     selectItem?.let { aptIt ->
                         val amount: Double = if (aptIt.isTrade) aptIt.dealAmount.replace(",", "").toDouble() else aptIt.deposit.replace(",", "").toDouble()
@@ -239,7 +240,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
                     }
                     marker.subCaptionTextSize = 13f
                     marker.subCaptionColor = getColor(R.color.white)
-                    marker.subCaptionHaloColor = getColor(R.color.white)
+                    marker.subCaptionHaloColor = getColor(android.R.color.transparent)
                     marker.setOnClickListener {
                         val intent = Intent(this@MainActivity, DetailActivity::class.java)
                         intent.putExtra("apartmentName", marker.captionText)

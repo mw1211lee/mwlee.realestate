@@ -4,9 +4,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 class DetailViewModel : ViewModel() {
-    var average = MutableLiveData<Int>()
+    var isTrade = MutableLiveData<Boolean>()
 
     init {
-        average.value = 0
+        isTrade.value = true
     }
 }

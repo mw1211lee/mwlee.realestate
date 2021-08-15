@@ -3,8 +3,8 @@
     <string name="trade">매매</string>
     <string name="rent">전월세</string>
     <string name="view_more_show">더보기</string>
-    <string name="new_real_trade_alarm">새로운 실거래가 알림받기</string>
+    <string name="new_real_trade_alarm">새로운 실거래가 알림받기(*)</string>
 
     <string name="average_trade_month">최근 실거래 기준 1개월 평균</string>
-    <string name="last_check_time">국토교통부에서 %d시간 전 확인</string>
+    <string name="last_check_time">국토교통부에서 %d시간 전 확인(*)</string>
 </resources>

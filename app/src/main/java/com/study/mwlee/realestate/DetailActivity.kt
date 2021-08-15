@@ -10,14 +10,14 @@ class DetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.detail_activity)
 
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.container, DetailFragment.newInstance())
-                .commitNow()
-        }
-
         intent.extras?.let {
             title = it.getString("apartmentName")
+        }
+
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container, DetailFragment.newInstance(title.toString()))
+                .commitNow()
         }
     }
 
