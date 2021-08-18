@@ -15,30 +15,48 @@ import com.study.mwlee.realestate.room.DatabaseHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class ChartFragment(private val aptName: String) : Fragment() {
 
     private lateinit var binding: ChartFragmentBinding
+    private var selectedArea: String? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = ChartFragmentBinding.inflate(layoutInflater, container, false)
+        reDrawChart(selectedArea)
         return binding.root
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
+    fun reDrawChart(selectedArea: String?) {
+        this.selectedArea = selectedArea
         activity?.let {
             CoroutineScope(Dispatchers.IO).launch {
                 // 실거래가 셋팅 (데이터)
-                val tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(aptName)
-                // TODO 처음 날짜와 끝 날짜를 가져와서 날짜 개수를 구하여 X 축 값 셋팅
+                val tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(aptName)?.reversed()
+                val filterData = tradeList?.filter { it.areaForExclusiveUse.toString() == selectedArea }
+                val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+                var startDateTime = 0L
+                filterData?.let {
+                    if (it.isNotEmpty()) {
+                        startDateTime = dateFormat.parse(
+                            it[0].dealYear.toString() + (if (it[0].dealMonth < 10) "0" else "") + it[0].dealMonth.toString() + (if (it[0].dealDay < 10) "0" else "") + it[0].dealDay.toString()
+                        ).time
+                    }
+                }
 
-                // TODO index 로는 안됨. 날짜 계산해서 나눠서 해야함. (같은날 여러건 있음)
-                val valuesList = tradeList?.mapIndexed { index, aptEntity ->
+                // TODO 같은날 여러건 있는 데이터는 1개의 데이터로 변환 (평균)
+                val valuesList = filterData?.map { aptEntity ->
+                    val endDateTime = dateFormat.parse(
+                        aptEntity.dealYear.toString() + (if (aptEntity.dealMonth < 10) "0" else "") + aptEntity.dealMonth.toString() + (if (aptEntity.dealDay < 10) "0" else "") + aptEntity.dealDay.toString()
+                    ).time
+                    val differentTime = (endDateTime - startDateTime) / (24 * 60 * 60 * 1000)
+
                     Entry(
-                        index.toFloat(),
+                        differentTime.toFloat(),
                         if (aptEntity.isTrade) aptEntity.dealAmount.replace(",", "").toFloat() else aptEntity.deposit.replace(",", "").toFloat()
                     )
                 }
@@ -66,10 +84,12 @@ class ChartFragment(private val aptName: String) : Fragment() {
                     binding.lineChart.data.isHighlightEnabled = false
                     // 더블 Tap 으로 확대 기능 제거
                     binding.lineChart.isDoubleTapToZoomEnabled = false
+
+                    binding.lineChart.notifyDataSetChanged()
+                    binding.lineChart.invalidate()
                 }
             }
         }
-
     }
 
 }

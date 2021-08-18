@@ -14,6 +14,27 @@ interface AptDao {
     @Query("SELECT * FROM apt WHERE apartmentName = :aptName ORDER BY dealYear DESC, dealMonth DESC, dealDay DESC")
     suspend fun getAptData(aptName: String): List<AptEntity>
 
+    @Query("SELECT COUNT(*) FROM apt WHERE isTrade = :isTrade AND buildYear = :buildYear AND apartmentName = :apartmentName AND dong = :dong AND dealYear = :dealYear AND dealMonth = :dealMonth AND dealDay = :dealDay AND areaForExclusiveUse = :areaForExclusiveUse AND jibun = :jibun AND regionalCode = :regionalCode AND floor = :floor AND dealAmount = :dealAmount AND cancelDealType = :cancelDealType AND cancelDealDay = :cancelDealDay AND deposit = :deposit AND monthlyRent = :monthlyRent AND dongPlusJibun = :dongPlusJibun")
+    suspend fun getAptData(
+        isTrade: Boolean,
+        buildYear: Int,
+        apartmentName: String,
+        dong: String,
+        dealYear: Int,
+        dealMonth: Int,
+        dealDay: Int,
+        areaForExclusiveUse: Double,
+        jibun: String,
+        regionalCode: Int,
+        floor: Int,
+        dealAmount: String,
+        cancelDealType: String,
+        cancelDealDay: String,
+        deposit: String,
+        monthlyRent: String,
+        dongPlusJibun: String
+    ): Int
+
     @Query("SELECT DISTINCT areaForExclusiveUse FROM apt WHERE apartmentName = :aptName")
     suspend fun getAptAreaData(aptName: String): List<Double>
 

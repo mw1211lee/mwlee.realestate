@@ -147,8 +147,36 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
             Log.e(tag, "retrofit context response size= " + response.body()?.body?.items?.item?.size.toString() + "(" + requestDate + ")")
 
             CoroutineScope(Dispatchers.IO).launch {
-                // TODO 중복 데이터 쌓이는 문제 발견
-                DatabaseHelper.getInstance(baseContext)?.getAptDao()?.insert(aptEntityList)
+                for (entity in aptEntityList) {
+                    val findCount = DatabaseHelper.getInstance(baseContext)?.getAptDao()?.getAptData(
+                        entity.isTrade,
+                        entity.buildYear,
+                        entity.apartmentName,
+                        entity.dong,
+                        entity.dealYear,
+                        entity.dealMonth,
+                        entity.dealDay,
+                        entity.areaForExclusiveUse,
+                        entity.jibun,
+                        entity.regionalCode,
+                        entity.floor,
+                        entity.dealAmount,
+                        entity.cancelDealType,
+                        entity.cancelDealDay,
+                        entity.deposit,
+                        entity.monthlyRent,
+                        entity.dongPlusJibun
+                    )
+
+                    findCount?.let {
+                        if (it <= 0) {
+                            DatabaseHelper.getInstance(baseContext)?.getAptDao()?.insert(entity)
+                        }
+                    }
+                }
+
+                // 중복 데이터 쌓이는 문제 발견 (Key 값이 자동 생성이어서 항상 값이 다름. Select & Insert 로 변경)
+                // DatabaseHelper.getInstance(baseContext)?.getAptDao()?.insert(aptEntityList)
 
                 launch(Dispatchers.Main) {
                     // 마지막 요청 결과가 왔을 경우 다음 로직을 수행한다

@@ -8,6 +8,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.size
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -21,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class DetailFragment(private val aptName: String) : Fragment(), View.OnClickListener {
@@ -31,23 +33,22 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
 
     private lateinit var binding: DetailFragmentBinding
     private lateinit var viewModel: DetailViewModel
+    private val chartFragment = ArrayList<ChartFragment>()
 
     private var tradeList: List<AptEntity>? = null
     private val tradeShowCountMax = 5
     private var tradeCurrentCount = 0
 
-    private val chartFragment1 = ChartFragment(aptName)
-    private val chartFragment2 = ChartFragment(aptName)
-    private val chartFragment3 = ChartFragment(aptName)
-    private val chartFragment4 = ChartFragment(aptName)
+    private var selectedArea: String? = null
+
+    init {
+        for (index in 1..4) {
+            chartFragment.add(ChartFragment(aptName))
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = DetailFragmentBinding.inflate(layoutInflater, container, false)
-        return binding.root
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(this).get(DetailViewModel::class.java)
 
         // Trade 값이 변경될 경우 같이 변경되어야 하는 UI
@@ -75,7 +76,7 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
         binding.textRent.setOnClickListener(this)
 
         // Tab 셋팅 - Chart
-        activity?.supportFragmentManager?.beginTransaction()?.replace(binding.containerChart.id, chartFragment1)?.commit()
+        activity?.supportFragmentManager?.beginTransaction()?.replace(binding.containerChart.id, chartFragment[0])?.commit()
 
         binding.containerTab.addTab(binding.containerTab.newTab().setText("A"))
         binding.containerTab.addTab(binding.containerTab.newTab().setText("B"))
@@ -85,14 +86,12 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
         // Tab 선택 이벤트
         binding.containerTab.addOnTabSelectedListener(object : OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
-                val selected = when (tab.position) {
-                    0 -> chartFragment1
-                    1 -> chartFragment2
-                    2 -> chartFragment3
-                    3 -> chartFragment4
-                    else -> chartFragment1
-                }
+                val selected = chartFragment[tab.position]
                 activity?.supportFragmentManager?.beginTransaction()?.replace(binding.containerChart.id, selected)?.commit()
+
+                selectedArea?.let {
+                    chartFragment[tab.position].reDrawChart(it)
+                }
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab) {}
@@ -103,29 +102,36 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
         activity?.let {
             CoroutineScope(Dispatchers.IO).launch {
                 // 평형 가져오기 (데이터)
-                // TODO
                 val areaData = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptAreaData(aptName)
 
                 // 실거래가 셋팅 (데이터)
                 tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(aptName)
                 launch(Dispatchers.Main) {
                     // 평형 가져오기 (UI)
-                    // TODO
                     areaData?.let {
                         binding.spinnerArea.adapter = context?.let { cnt ->
                             ArrayAdapter(cnt, android.R.layout.simple_spinner_dropdown_item, it.sorted())
                         }
                     }
-
-                    // 실거래가 셋팅 (UI)
-                    showNextTradeInfo()
                 }
             }
         }
         binding.spinnerArea.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(adapterView: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                // TODO 스피너 선택한 데이터만 보여주기
+                // 스피너로 선택한 데이터만 보여주기
+                selectedArea = adapterView?.selectedItem.toString()
+                // TODO 테스트 용도로 제거 필요
                 binding.textAverageMonth.text = adapterView?.selectedItem.toString()
+
+                // 거래 리스트 데이터 초기화
+                tradeCurrentCount = 0
+                clearTradeData()
+
+                // 차트 데이터 초기화
+                chartFragment[binding.containerTab.selectedTabPosition].reDrawChart(selectedArea)
+
+                // 실거래가 셋팅 (UI)
+                showNextTradeInfo()
             }
 
             override fun onNothingSelected(p0: AdapterView<*>?) {}
@@ -138,14 +144,16 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
 
         // 기타 설정
         binding.textLastCheckTime.text = String.format(getString(R.string.last_check_time), 2)
+        return binding.root
     }
 
     private fun showNextTradeInfo() {
-        tradeList?.let {
-            if (tradeCurrentCount + 1 <= it.size) {
+        tradeList?.let { it ->
+            val filterData = it.filter { it.areaForExclusiveUse.toString() == selectedArea }
+            if (tradeCurrentCount + 1 <= filterData.size) {
                 for (i in tradeCurrentCount until (tradeCurrentCount + tradeShowCountMax)) {
-                    if (i < it.size) {
-                        makeTradeData(false, it[i])
+                    if (i < filterData.size) {
+                        makeTradeData(false, filterData[i])
                     } else {
                         binding.textMoreShow.visibility = View.GONE
                         return@let
@@ -176,13 +184,20 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
                 textFourth.text = "층"
             } else {
                 viewLineTop.visibility = View.GONE
-                textFirst.text = data?.dealYear.toString() + "." + data?.dealMonth.toString() + "." + data?.dealDay.toString()
+                val firstData = data?.dealYear.toString() + "." + data?.dealMonth.toString() + "." + data?.dealDay.toString()
+                textFirst.text = firstData
                 textSecond.text = data?.dealAmount
                 textThird.text = data?.areaForExclusiveUse.toString()
                 textFourth.text = data?.floor.toString()
             }
 
             binding.linearTradeListLayout.addView(item)
+        }
+    }
+
+    private fun clearTradeData() {
+        for (itemIndex in binding.linearTradeListLayout.size - 1 downTo 1) {
+            binding.linearTradeListLayout.removeViewAt(itemIndex)
         }
     }
 
