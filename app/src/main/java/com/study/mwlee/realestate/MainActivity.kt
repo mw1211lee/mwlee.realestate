@@ -33,6 +33,10 @@ import kotlin.math.roundToInt
 
 class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
+    companion object {
+        const val CHECK_MONTH_AGO = 12
+    }
+
     private val tag = "MainActivity"
 
     private lateinit var binding: MainActivityBinding
@@ -91,7 +95,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
             Log.e(tag, "request get apt data")
 
             // 1~2달전
-            for (i in 0..1) {
+            for (i in 0 until CHECK_MONTH_AGO) {
                 calendarInstance.add(Calendar.MONTH, -1)
                 val year = calendarInstance.get(Calendar.YEAR)
                 val month = calendarInstance.get(Calendar.MONTH) + 1
@@ -259,7 +263,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
                     marker.setCaptionAligns(Align.Center)
                     marker.captionText = aptList?.find { aptIt -> aptIt.dongPlusJibun == it.address }?.apartmentName ?: it.address
                     marker.captionTextSize = 10f
-                    marker.captionColor = getColor(R.color.main_home_title)
+                    marker.captionColor = getColor(R.color.main_home_icon_title)
                     marker.captionHaloColor = getColor(android.R.color.transparent)
                     val selectItem = aptList?.maxByOrNull { aptIt -> aptIt.dongPlusJibun == it.address }
                     selectItem?.let { aptIt ->

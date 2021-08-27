@@ -2,9 +2,14 @@
     <string name="app_name">mw 부동산</string>
     <string name="trade">매매</string>
     <string name="rent">전월세</string>
+    <string name="map">지도</string>
     <string name="view_more_show">더보기</string>
     <string name="new_real_trade_alarm">새로운 실거래가 알림받기(*)</string>
-
     <string name="average_trade_month">최근 실거래 기준 1개월 평균</string>
+
+    <string name="floor_area_ratio">392세대\n용적률 209%(*)</string>
+    <string name="construction_rate">2016년 11월(6년차)\n건폐율 24%(*)</string>
+    <string name="weekly_visitor">망포동 주간 방문자 18위(*)</string>
+    <string name="watching_now">지금 60명이 보는 중(*) ></string>
     <string name="last_check_time">국토교통부에서 %d시간 전 확인(*)</string>
 </resources>

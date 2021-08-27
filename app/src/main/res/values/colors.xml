@@ -9,10 +9,17 @@
     <color name="white">#FFFFFFFF</color>
     <color name="white_50">#80FFFFFF</color>
 
-    <color name="main_home_icon">#5963D9</color>
-    <color name="main_home_title">#BBBFEF</color>
+    <color name="actionbar">#4D55B2</color>
 
-    <color name="detail_view_line">#F2F2F2</color>
+    <color name="main_home_icon">#5963D9</color>
+    <color name="main_home_icon_title">#BBBFEF</color>
+
+    <color name="detail_view_main_text_color">#484848</color>
+    <color name="detail_view_watching_now_text_color">#FC541B</color>
+    <color name="detail_view_main_bold_line">#EAEBED</color>
+    <color name="detail_view_main_bold_bold_line">#E2E3E5</color>
+    <color name="detail_view_toolbar_line">#565EB6</color>
+    <color name="detail_view_trade_line">#F2F2F2</color>
     <color name="detail_view_trade_item_text">#484848</color>
     <color name="detail_view_trade_item_header_back">#FAFAFA</color>
     <color name="detail_view_more_show_back">#CECFDC</color>
