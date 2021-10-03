@@ -43,8 +43,11 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
     private val preferenceManager: PreferenceManager by lazy { PreferenceManager(this) }
     private var aptList: List<AptEntity>? = null
     private var map: NaverMap? = null
-    private var requestCount = 0
-    private var responseCount = 0
+    private var isRequestTrade = true
+    private var requestTradeCount = 0
+    private var responseTradeCount = 0
+    private var requestRentCount = 0
+    private var responseRentCount = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +63,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
         mapFragment.getMapAsync(this)
 
-        checkRealEstateData()
+        checkRealEstateData(isTrade = true)
     }
 
     @UiThread
@@ -86,15 +89,19 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun checkRealEstateData() {
+    private fun checkRealEstateData(isTrade: Boolean) {
+        isRequestTrade = isTrade
         val calendarInstance = Calendar.getInstance()
         val currentDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(calendarInstance.time)
 
-        if (preferenceManager.getLastUpdateDate().isEmpty() || preferenceManager.getLastUpdateDate() < currentDate) {
-            // 실거래가 호출 (최근 3개월)
-            Log.e(tag, "request get apt data")
+        val needRequest = if (isTrade) (preferenceManager.getTradeLastUpdateDate().isEmpty() || preferenceManager.getTradeLastUpdateDate() < currentDate)
+        else (preferenceManager.getRentLastUpdateDate().isEmpty() || preferenceManager.getRentLastUpdateDate() < currentDate)
 
-            // 1~2달전
+        if (needRequest) {
+            // 실거래가 호출
+            Log.e(tag, "request get apt trade = $isTrade data")
+
+            // 몇달 전
             for (i in 0 until CHECK_MONTH_AGO) {
                 calendarInstance.add(Calendar.MONTH, -1)
                 val year = calendarInstance.get(Calendar.YEAR)
@@ -102,23 +109,41 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
                 val beforeDate = SimpleDateFormat("yyyyMM", Locale.getDefault()).format(calendarInstance.time)
 
                 CoroutineScope(Dispatchers.IO).launch {
-                    val count = DatabaseHelper.getInstance(baseContext)?.getAptDao()?.getAptMonthData(year, month, 41117)
+                    val count = DatabaseHelper.getInstance(baseContext)?.getAptDao()?.getAptMonthData(year, month, 41117, isTrade)
                     if (count != null && count == 0) {
-                        launch(Dispatchers.Main) {
-                            requestCount++
+                        if (isTrade) {
+                            requestTradeCount++
                             RetrofitClient.aptService.getAptTrade(BuildConfig.KEY_APT, "41117", beforeDate).enqueue(aptResponse)
+                        } else {
+                            requestRentCount++
+                            RetrofitClient.aptService.getAptRent(BuildConfig.KEY_APT, "41117", beforeDate).enqueue(aptResponse)
                         }
                     }
                 }
             }
 
             // 이번달
-            requestCount++
-            RetrofitClient.aptService.getAptTrade(BuildConfig.KEY_APT, "41117", currentDate.substring(0, 6)).enqueue(aptResponse)
+            CoroutineScope(Dispatchers.IO).launch {
+                if (isTrade) {
+                    requestTradeCount++
+                    RetrofitClient.aptService.getAptTrade(BuildConfig.KEY_APT, "41117", currentDate.substring(0, 6)).enqueue(aptResponse)
+                } else {
+                    requestRentCount++
+                    RetrofitClient.aptService.getAptRent(BuildConfig.KEY_APT, "41117", currentDate.substring(0, 6)).enqueue(aptResponse)
+                }
+            }
         } else {
+            if (isTrade) {
+                checkRealEstateData(isTrade = false)
+                return
+            }
+
             CoroutineScope(Dispatchers.IO).launch {
                 aptList = DatabaseHelper.getInstance(baseContext)?.getAptDao()?.getAptAllData()
-                Log.e(tag, "coroutine context apt db size= " + aptList?.size.toString())
+                Log.e(
+                    tag,
+                    "trade = $isTrade, TC = $requestTradeCount, TC2 = $responseTradeCount, RC = $requestRentCount, RC2 = $responseRentCount coroutine context apt db size= " + aptList?.size.toString()
+                )
 
                 launch(Dispatchers.Main) { checkLocation() }
             }
@@ -127,12 +152,11 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
     private val aptResponse = object : Callback<AptResponse> {
         override fun onFailure(call: Call<AptResponse>, t: Throwable) {
-            responseCount++
+            if (isRequestTrade) responseTradeCount++ else responseRentCount++
             Log.e(tag, t.toString())
         }
 
         override fun onResponse(call: Call<AptResponse>, response: Response<AptResponse>) {
-            responseCount++
             // DB 에 저장
             val aptEntityList = ArrayList<AptEntity>()
             response.body()?.body?.items?.item?.forEach {
@@ -146,7 +170,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
             val currentDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(calendarInstance.time)
             val simpleCurrentDate = currentDate.substring(0, 6)
             if (requestDate == simpleCurrentDate) {
-                preferenceManager.saveLastUpdateDate(currentDate)
+                if (isRequestTrade) preferenceManager.saveTradeLastUpdateDate(currentDate) else preferenceManager.saveRentLastUpdateDate(currentDate)
             }
             Log.e(tag, "retrofit context response size= " + response.body()?.body?.items?.item?.size.toString() + "(" + requestDate + ")")
 
@@ -181,11 +205,18 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
                 // 중복 데이터 쌓이는 문제 발견 (Key 값이 자동 생성이어서 항상 값이 다름. Select & Insert 로 변경)
                 // DatabaseHelper.getInstance(baseContext)?.getAptDao()?.insert(aptEntityList)
+                if (isRequestTrade) responseTradeCount++ else responseRentCount++
 
                 launch(Dispatchers.Main) {
                     // 마지막 요청 결과가 왔을 경우 다음 로직을 수행한다
-                    if (requestCount == responseCount) {
-                        checkRealEstateData()
+                    if (isRequestTrade) {
+                        if (requestTradeCount == responseTradeCount) {
+                            checkRealEstateData(isTrade = true)
+                        }
+                    } else {
+                        if (requestRentCount == responseRentCount) {
+                            checkRealEstateData(isTrade = false)
+                        }
                     }
                 }
             }

@@ -38,8 +38,8 @@ interface AptDao {
     @Query("SELECT DISTINCT areaForExclusiveUse FROM apt WHERE apartmentName = :aptName")
     suspend fun getAptAreaData(aptName: String): List<Double>
 
-    @Query("SELECT COUNT(*) FROM apt WHERE dealYear = :year AND dealMonth = :month AND regionalCode = :regionalCode")
-    suspend fun getAptMonthData(year: Int, month: Int, regionalCode: Int): Int
+    @Query("SELECT COUNT(*) FROM apt WHERE dealYear = :year AND dealMonth = :month AND regionalCode = :regionalCode AND isTrade = :isTrade")
+    suspend fun getAptMonthData(year: Int, month: Int, regionalCode: Int, isTrade: Boolean): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(aptEntity: AptEntity)

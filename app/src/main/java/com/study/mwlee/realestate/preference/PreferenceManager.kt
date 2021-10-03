@@ -9,12 +9,20 @@ import com.study.mwlee.realestate.preference.PreferenceHelper.get
 class PreferenceManager(context: Context) {
     private val prefs: SharedPreferences = PreferenceHelper.defaultPrefs(context)
 
-    fun saveLastUpdateDate(date: String) {
-        prefs["lastUpdateDate"] = date
+    fun saveTradeLastUpdateDate(date: String) {
+        prefs["tradeLastUpdateDate"] = date
     }
 
-    fun getLastUpdateDate(): String {
-        return prefs["lastUpdateDate", ""]
+    fun getTradeLastUpdateDate(): String {
+        return prefs["tradeLastUpdateDate", ""]
+    }
+
+    fun saveRentLastUpdateDate(date: String) {
+        prefs["rentLastUpdateDate"] = date
+    }
+
+    fun getRentLastUpdateDate(): String {
+        return prefs["rentLastUpdateDate", ""]
     }
 
     fun saveLastLocation(data: LatLng) {
