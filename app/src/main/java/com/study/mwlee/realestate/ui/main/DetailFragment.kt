@@ -52,8 +52,8 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
         viewModel = ViewModelProvider(this).get(DetailViewModel::class.java)
 
         // Trade 값이 변경될 경우 같이 변경되어야 하는 UI
-        val isTradeObserver = Observer<Boolean> { updateValue ->
-            if (updateValue) {
+        val isTradeObserver = Observer<Boolean> { isTrade ->
+            if (isTrade) {
                 // 매매(Trade) 클릭
                 binding.textTrade.setTextColor(ResourcesCompat.getColor(resources, R.color.white, context?.theme))
                 binding.textTrade.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_200, context?.theme))
@@ -65,6 +65,24 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
                 binding.textTrade.setBackgroundColor(ResourcesCompat.getColor(resources, android.R.color.transparent, context?.theme))
                 binding.textRent.setTextColor(ResourcesCompat.getColor(resources, R.color.white, context?.theme))
                 binding.textRent.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_200, context?.theme))
+            }
+            // 차트 다시 그리기
+            chartFragment[binding.containerTab.selectedTabPosition].reDrawChart(isTrade, selectedArea)
+
+            // 실거래 리스트 다시 그리기
+            activity?.let {
+                CoroutineScope(Dispatchers.IO).launch {
+                    // 실거래가 셋팅 (데이터)
+                    tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(isTrade, aptName)
+
+                    launch(Dispatchers.Main) {
+                        // 거래 리스트 데이터 초기화
+                        tradeCurrentCount = 0
+                        clearTradeData()
+                        // 실거래가 셋팅 (UI)
+                        showNextTradeInfo()
+                    }
+                }
             }
         }
 
@@ -90,7 +108,7 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
                 activity?.supportFragmentManager?.beginTransaction()?.replace(binding.containerChart.id, selected)?.commit()
 
                 selectedArea?.let {
-                    chartFragment[tab.position].reDrawChart(it)
+                    chartFragment[tab.position].reDrawChart(viewModel.isTrade.value, it)
                 }
             }
 
@@ -105,7 +123,7 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
                 val areaData = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptAreaData(aptName)
 
                 // 실거래가 셋팅 (데이터)
-                tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(aptName)
+                tradeList = viewModel.isTrade.value?.let { isTrade -> DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(isTrade, aptName) }
                 launch(Dispatchers.Main) {
                     // 평형 가져오기 (UI)
                     areaData?.let {
@@ -116,6 +134,7 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
                 }
             }
         }
+
         binding.spinnerArea.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(adapterView: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 // 스피너로 선택한 데이터만 보여주기
@@ -128,7 +147,7 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
                 clearTradeData()
 
                 // 차트 데이터 초기화
-                chartFragment[binding.containerTab.selectedTabPosition].reDrawChart(selectedArea)
+                chartFragment[binding.containerTab.selectedTabPosition].reDrawChart(viewModel.isTrade.value, selectedArea)
 
                 // 실거래가 셋팅 (UI)
                 showNextTradeInfo()
@@ -186,7 +205,7 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
                 viewLineTop.visibility = View.GONE
                 val firstData = data?.dealYear.toString() + "." + data?.dealMonth.toString() + "." + data?.dealDay.toString()
                 textFirst.text = firstData
-                textSecond.text = data?.dealAmount
+                textSecond.text = if (data?.isTrade == true) data.dealAmount else data?.deposit
                 textThird.text = data?.areaForExclusiveUse.toString()
                 textFourth.text = data?.floor.toString()
             }

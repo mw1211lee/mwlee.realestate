@@ -15,9 +15,6 @@ import com.study.mwlee.realestate.room.DatabaseHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.collections.ArrayList
 
 
 class ChartFragment(private val aptName: String) : Fragment() {
@@ -27,40 +24,43 @@ class ChartFragment(private val aptName: String) : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = ChartFragmentBinding.inflate(layoutInflater, container, false)
-        reDrawChart(selectedArea)
+        reDrawChart(true, selectedArea)
         return binding.root
     }
 
-    fun reDrawChart(selectedArea: String?) {
+    fun reDrawChart(isTrade: Boolean?, selectedArea: String?) {
+        val isTradeNotNull = isTrade ?: true
         this.selectedArea = selectedArea
         activity?.let {
             CoroutineScope(Dispatchers.IO).launch {
                 // 실거래가 셋팅 (데이터)
-                val tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(aptName)?.reversed()
+                val tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(isTradeNotNull, aptName)?.reversed()
                 val filterData = tradeList?.filter { it.areaForExclusiveUse.toString() == selectedArea }
-                val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
-                var startDateTime = 0L
-                filterData?.let {
-                    if (it.isNotEmpty()) {
-                        startDateTime = dateFormat.parse(
-                            it[0].dealYear.toString() + (if (it[0].dealMonth < 10) "0" else "") + it[0].dealMonth.toString() + (if (it[0].dealDay < 10) "0" else "") + it[0].dealDay.toString()
-                        ).time
+
+                // 1달 단위로 데이터 평균을 구함
+                var startString = ""
+                val monthAverage = filterData?.groupBy { it.dealYear.toString() + (if (it.dealMonth < 10) "0" else "") + it.dealMonth.toString() }
+                val valuesList = ArrayList<Entry>()
+                val mapSize = monthAverage?.size ?: 0
+                if (mapSize > 0) {
+                    monthAverage?.firstNotNullOf {
+                        startString = it.key
                     }
                 }
 
-                // TODO 같은날 여러건 있는 데이터는 1개의 데이터로 변환 (평균)
-                val valuesList = filterData?.map { aptEntity ->
-                    val endDateTime = dateFormat.parse(
-                        aptEntity.dealYear.toString() + (if (aptEntity.dealMonth < 10) "0" else "") + aptEntity.dealMonth.toString() + (if (aptEntity.dealDay < 10) "0" else "") + aptEntity.dealDay.toString()
-                    ).time
-                    val differentTime = (endDateTime - startDateTime) / (24 * 60 * 60 * 1000)
-
-                    Entry(
-                        differentTime.toFloat(),
-                        if (aptEntity.isTrade) aptEntity.dealAmount.replace(",", "").toFloat() else aptEntity.deposit.replace(",", "").toFloat()
-                    )
+                // 차트에 맞도록 데이터 가공
+                monthAverage?.forEach { month ->
+                    valuesList.add(Entry(
+                        if (month.key[3] == startString[3]) month.key.toFloat() - startString.toFloat()
+                        else month.key.substring(4, 6).toFloat() - startString.substring(4, 6).toFloat() + 12,
+                        (month.value.sumOf {
+                            if (it.isTrade) it.dealAmount.replace(",", "").toDouble()
+                            else it.deposit.replace(",", "").toDouble()
+                        } / month.value.size).toFloat()
+                    ))
                 }
 
+                // 차트 셋팅
                 val set1 = LineDataSet(valuesList, null)
                 val dataSets: ArrayList<ILineDataSet> = ArrayList()
                 dataSets.add(set1)
