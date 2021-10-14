@@ -57,8 +57,8 @@
                     android:orientation="horizontal">
 
                     <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="50dp"
-                        android:layout_height="40dp"
+                        android:layout_width="46dp"
+                        android:layout_height="36dp"
                         android:layout_margin="4dp"
                         android:background="@drawable/view_round_corner_2"
                         android:gravity="center"
@@ -67,10 +67,10 @@
                         android:textSize="16dp" />
 
                     <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:layout_margin="4dp"
-                        android:background="@color/purple_200" />
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_margin="10dp"
+                        app:srcCompat="@drawable/outline_share_black" />
 
                 </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -165,7 +165,7 @@
                         android:layout_height="match_parent"
                         android:layout_margin="2dp"
                         android:layout_weight="1"
-                        android:background="@color/purple_200"
+                        android:background="?attr/colorPrimary"
                         android:gravity="center"
                         android:text="@string/trade"
                         android:textColor="@color/white"
@@ -179,7 +179,7 @@
                         android:layout_weight="1"
                         android:gravity="center"
                         android:text="@string/rent"
-                        android:textColor="@color/purple_200"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="16dp" />
 
                 </androidx.appcompat.widget.LinearLayoutCompat>
@@ -254,7 +254,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="2"
-            android:drawableEnd="@drawable/view_detail_more_show_arrow"
+            android:drawableEnd="@drawable/view_detail_spinner_arrow"
             android:gravity="center_vertical"
             android:paddingStart="20dp"
             android:paddingEnd="5dp"
@@ -271,7 +271,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="2"
-            android:drawableEnd="@drawable/view_detail_more_show_arrow"
+            android:drawableEnd="@drawable/view_detail_spinner_arrow"
             android:gravity="center_vertical"
             android:paddingStart="20dp"
             android:paddingEnd="5dp"
@@ -288,7 +288,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="2"
-            android:drawableEnd="@drawable/view_detail_more_show_arrow"
+            android:drawableEnd="@drawable/view_detail_spinner_arrow"
             android:gravity="center_vertical"
             android:paddingStart="20dp"
             android:paddingEnd="5dp"
@@ -307,10 +307,10 @@
             android:layout_weight="1.2">
 
             <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:layout_centerInParent="true"
-                android:background="@color/purple_200" />
+                app:srcCompat="@drawable/outline_notifications_white" />
 
         </RelativeLayout>
 

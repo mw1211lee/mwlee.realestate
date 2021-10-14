@@ -56,15 +56,15 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
             if (isTrade) {
                 // 매매(Trade) 클릭
                 binding.textTrade.setTextColor(ResourcesCompat.getColor(resources, R.color.white, context?.theme))
-                binding.textTrade.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_200, context?.theme))
-                binding.textRent.setTextColor(ResourcesCompat.getColor(resources, R.color.purple_200, context?.theme))
+                binding.textTrade.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.actionbar, context?.theme))
+                binding.textRent.setTextColor(ResourcesCompat.getColor(resources, R.color.actionbar, context?.theme))
                 binding.textRent.setBackgroundColor(ResourcesCompat.getColor(resources, android.R.color.transparent, context?.theme))
             } else {
                 // 전월세(Rent) 클릭
-                binding.textTrade.setTextColor(ResourcesCompat.getColor(resources, R.color.purple_200, context?.theme))
+                binding.textTrade.setTextColor(ResourcesCompat.getColor(resources, R.color.actionbar, context?.theme))
                 binding.textTrade.setBackgroundColor(ResourcesCompat.getColor(resources, android.R.color.transparent, context?.theme))
                 binding.textRent.setTextColor(ResourcesCompat.getColor(resources, R.color.white, context?.theme))
-                binding.textRent.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_200, context?.theme))
+                binding.textRent.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.actionbar, context?.theme))
             }
             // 차트 다시 그리기
             chartFragment[binding.containerTab.selectedTabPosition].reDrawChart(isTrade, selectedArea)
