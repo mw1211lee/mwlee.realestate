@@ -1,23 +1,25 @@
 package com.study.mwlee.realestate
 
 import android.os.Bundle
+import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
+import com.google.android.material.snackbar.Snackbar
+import com.study.mwlee.realestate.databinding.DetailActivityBinding
 import com.study.mwlee.realestate.ui.main.DetailFragment
 
 
 class DetailActivity : AppCompatActivity() {
 
+    private lateinit var binding: DetailActivityBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.detail_activity)
+        binding = DetailActivityBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        val toolbar: Toolbar = findViewById<View>(R.id.toolbar) as Toolbar
-        setSupportActionBar(toolbar)
-
-        // add back arrow to toolbar
+        // 툴바 설정
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setDisplayShowHomeEnabled(true)
 
@@ -32,11 +34,18 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.detail_activity_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
                 finish()
-                return true
+            }
+            R.id.menu_location -> {
+                Snackbar.make(binding.root, "Clicked Location", Snackbar.LENGTH_SHORT).show()
             }
         }
 

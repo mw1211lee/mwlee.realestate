@@ -3,8 +3,11 @@ package com.study.mwlee.realestate
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import androidx.annotation.UiThread
-import androidx.fragment.app.FragmentActivity
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.snackbar.Snackbar
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.overlay.Align
@@ -31,7 +34,7 @@ import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
 
-class MainActivity : FragmentActivity(), OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     companion object {
         const val CHECK_MONTH_AGO = 12
@@ -54,6 +57,12 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
         binding = MainActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 툴바 설정
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.outline_podcasts_white)
+
         // 네이버 지도 설정
         val fm = supportFragmentManager
         val mapFragment = fm.findFragmentById(R.id.map) as MapFragment?
@@ -64,6 +73,30 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         checkRealEstateData(isTrade = true)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_activity_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            android.R.id.home -> {
+                Snackbar.make(binding.root, "Clicked Home", Snackbar.LENGTH_SHORT).show()
+            }
+            R.id.menu_search -> {
+                Snackbar.make(binding.root, "Clicked Search", Snackbar.LENGTH_SHORT).show()
+            }
+            R.id.menu_notification -> {
+                Snackbar.make(binding.root, "Clicked Notification", Snackbar.LENGTH_SHORT).show()
+            }
+            R.id.menu_my_info -> {
+                Snackbar.make(binding.root, "Clicked My Info", Snackbar.LENGTH_SHORT).show()
+            }
+        }
+
+        return super.onOptionsItemSelected(item)
     }
 
     @UiThread
@@ -296,7 +329,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
                     marker.captionTextSize = 10f
                     marker.captionColor = getColor(R.color.main_home_icon_title)
                     marker.captionHaloColor = getColor(android.R.color.transparent)
-                    val selectItem = aptList?.maxByOrNull { aptIt -> aptIt.dongPlusJibun == it.address }
+                    val selectItem = aptList?.filter { aptIt -> aptIt.dongPlusJibun == it.address && aptIt.isTrade }?.maxByOrNull { aptIt -> aptIt.dealAmount }
                     selectItem?.let { aptIt ->
                         val amount: Double = if (aptIt.isTrade) aptIt.dealAmount.replace(",", "").toDouble() else aptIt.deposit.replace(",", "").toDouble()
                         marker.subCaptionText = ((amount / 1000).roundToInt() / 10f).toString() + "억"
