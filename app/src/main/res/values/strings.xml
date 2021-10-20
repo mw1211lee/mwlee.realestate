@@ -8,6 +8,8 @@
     <string name="notification">알람</string>
     <string name="my_info">내 정보</string>
     <string name="view_more_show">더보기</string>
+    <string name="latest_year">최근 %d년</string>
+    <string name="trade_rent">매매/전세</string>
     <string name="new_real_trade_alarm">새로운 실거래가 알림받기(*)</string>
     <string name="average_trade_month">최근 실거래 기준 1개월 평균</string>
 

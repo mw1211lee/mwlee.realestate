@@ -42,8 +42,8 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
     private var selectedArea: String? = null
 
     init {
-        for (index in 1..4) {
-            chartFragment.add(ChartFragment(aptName))
+        for (position in 0..1) {
+            chartFragment.add(ChartFragment(position, aptName))
         }
     }
 
@@ -71,9 +71,9 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
 
             // 실거래 리스트 다시 그리기
             activity?.let {
-                CoroutineScope(Dispatchers.IO).launch {
+                CoroutineScope(Dispatchers.Default).launch {
                     // 실거래가 셋팅 (데이터)
-                    tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(isTrade, aptName)
+                    tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(aptName)?.filter { it.isTrade == isTrade }
 
                     launch(Dispatchers.Main) {
                         // 거래 리스트 데이터 초기화
@@ -96,10 +96,8 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
         // Tab 셋팅 - Chart
         activity?.supportFragmentManager?.beginTransaction()?.replace(binding.containerChart.id, chartFragment[0])?.commit()
 
-        binding.containerTab.addTab(binding.containerTab.newTab().setText("A"))
-        binding.containerTab.addTab(binding.containerTab.newTab().setText("B"))
-        binding.containerTab.addTab(binding.containerTab.newTab().setText("C"))
-        binding.containerTab.addTab(binding.containerTab.newTab().setText("D"))
+        binding.containerTab.addTab(binding.containerTab.newTab().setText(String.format(getString(R.string.latest_year), 1)))
+        binding.containerTab.addTab(binding.containerTab.newTab().setText(getString(R.string.trade_rent)))
 
         // Tab 선택 이벤트
         binding.containerTab.addOnTabSelectedListener(object : OnTabSelectedListener {
@@ -118,12 +116,14 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
 
         makeTradeData(true, null)
         activity?.let {
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(Dispatchers.Default).launch {
                 // 평형 가져오기 (데이터)
                 val areaData = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptAreaData(aptName)
 
                 // 실거래가 셋팅 (데이터)
-                tradeList = viewModel.isTrade.value?.let { isTrade -> DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(isTrade, aptName) }
+                tradeList = viewModel.isTrade.value?.let { isTrade ->
+                    DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(aptName)?.filter { it.isTrade == isTrade }
+                }
                 launch(Dispatchers.Main) {
                     // 평형 가져오기 (UI)
                     areaData?.let {
@@ -166,6 +166,14 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
         return binding.root
     }
 
+    override fun onClick(view: View?) {
+        when (view?.id) {
+            R.id.textTrade -> viewModel.isTrade.value = true
+            R.id.textRent -> viewModel.isTrade.value = false
+        }
+    }
+
+    // 데이터에 따른 더보기 레이아웃 보여줄지, 데이터를 추가할지 여부
     private fun showNextTradeInfo() {
         tradeList?.let { it ->
             val filterData = it.filter { it.areaForExclusiveUse.toString() == selectedArea }
@@ -186,6 +194,7 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
         }
     }
 
+    // 상세 리스트에 데이터 추가
     private fun makeTradeData(isHeader: Boolean = false, data: AptEntity?) {
         activity?.let {
             val item = View.inflate(it, R.layout.view_trade_item, null)
@@ -214,16 +223,10 @@ class DetailFragment(private val aptName: String) : Fragment(), View.OnClickList
         }
     }
 
+    // 상세 리스트 클리어
     private fun clearTradeData() {
         for (itemIndex in binding.linearTradeListLayout.size - 1 downTo 1) {
             binding.linearTradeListLayout.removeViewAt(itemIndex)
-        }
-    }
-
-    override fun onClick(view: View?) {
-        when (view?.id) {
-            R.id.textTrade -> viewModel.isTrade.value = true
-            R.id.textRent -> viewModel.isTrade.value = false
         }
     }
 

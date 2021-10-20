@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 val month = calendarInstance.get(Calendar.MONTH) + 1
                 val beforeDate = SimpleDateFormat("yyyyMM", Locale.getDefault()).format(calendarInstance.time)
 
-                CoroutineScope(Dispatchers.IO).launch {
+                CoroutineScope(Dispatchers.Default).launch {
                     val count = DatabaseHelper.getInstance(baseContext)?.getAptDao()?.getAptMonthData(year, month, 41117, isTrade)
                     if (count != null && count == 0) {
                         if (isTrade) {
@@ -156,7 +156,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             // 이번달
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(Dispatchers.Default).launch {
                 if (isTrade) {
                     requestTradeCount++
                     RetrofitClient.aptService.getAptTrade(BuildConfig.KEY_APT, "41117", currentDate.substring(0, 6)).enqueue(aptResponse)
@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 return
             }
 
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(Dispatchers.Default).launch {
                 aptList = DatabaseHelper.getInstance(baseContext)?.getAptDao()?.getAptAllData()
                 Log.e(
                     tag,
@@ -207,7 +207,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             Log.e(tag, "retrofit context response size= " + response.body()?.body?.items?.item?.size.toString() + "(" + requestDate + ")")
 
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(Dispatchers.Default).launch {
                 for (entity in aptEntityList) {
                     val findCount = DatabaseHelper.getInstance(baseContext)?.getAptDao()?.getAptData(
                         entity.isTrade,
@@ -257,7 +257,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun checkLocation() {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.Default).launch {
             var totalCount = 0
             var successCount = 0
             var failCount = 0
@@ -288,7 +288,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                             override fun onResponse(call: Call<GeocodingResponse>, response: Response<GeocodingResponse>) {
                                 successCount++
-                                CoroutineScope(Dispatchers.IO).launch {
+                                CoroutineScope(Dispatchers.Default).launch {
                                     DatabaseHelper.getInstance(baseContext)?.getLocationDao()?.insert(
                                         LocationEntity(it, response.body()?.addresses?.get(0)?.y, response.body()?.addresses?.get(0)?.x)
                                     )
@@ -311,7 +311,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     @UiThread
     private fun drawMap() {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.Default).launch {
             val addressDBList = DatabaseHelper.getInstance(baseContext)?.getLocationDao()?.getLocationAllData()
             Log.e(tag, "coroutine context location db size= " + addressDBList?.size)
 
