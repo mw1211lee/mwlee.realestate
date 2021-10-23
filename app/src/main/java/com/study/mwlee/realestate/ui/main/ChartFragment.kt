@@ -15,6 +15,8 @@ import com.study.mwlee.realestate.room.DatabaseHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class ChartFragment(private val position: Int, private val aptName: String) : Fragment() {
@@ -45,19 +47,19 @@ class ChartFragment(private val position: Int, private val aptName: String) : Fr
         activity?.let {
             CoroutineScope(Dispatchers.Default).launch {
                 // 실거래가 셋팅 (데이터)
+                val calendarInstance = Calendar.getInstance()
                 val tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(aptName)?.reversed()
-                val filterData = tradeList?.filter { it.isTrade == isTradeValue && it.areaForExclusiveUse.toString() == selectedArea }
+                val filterData = tradeList?.filter {
+                    it.isTrade == isTradeValue && it.areaForExclusiveUse.toString() == selectedArea
+                            && (it.dealYear == calendarInstance.get(Calendar.YEAR) ||
+                            ((it.dealYear == calendarInstance.get(Calendar.YEAR) - 1 && it.dealMonth > calendarInstance.get(Calendar.MONTH) + 1)))
+                }
 
                 // 1달 단위로 데이터 평균을 구함
-                var startString = ""
+                val startString = (calendarInstance.get(Calendar.YEAR) - 1).toString() +
+                        (if (calendarInstance.get(Calendar.MONTH) + 2 < 10) "0" else "") + (calendarInstance.get(Calendar.MONTH) + 2)
                 val monthAverage = filterData?.groupBy { it.dealYear.toString() + (if (it.dealMonth < 10) "0" else "") + it.dealMonth.toString() }
                 val valuesList = ArrayList<Entry>()
-                val mapSize = monthAverage?.size ?: 0
-                if (mapSize > 0) {
-                    monthAverage?.firstNotNullOf {
-                        startString = it.key
-                    }
-                }
 
                 // 차트에 맞도록 데이터 가공
                 monthAverage?.forEach { month ->
@@ -69,6 +71,31 @@ class ChartFragment(private val position: Int, private val aptName: String) : Fr
                             else it.deposit.replace(",", "").toDouble()
                         } / month.value.size).toFloat()
                     ))
+                }
+
+                // 첫번째 달 넣어주기
+                if (monthAverage?.containsKey(startString) == false && valuesList.isNotEmpty()) {
+                    valuesList.add(
+                        0,
+                        Entry(
+                            if (startString[3] == startString[3]) startString.toFloat() - startString.toFloat()
+                            else startString.substring(4, 6).toFloat() - startString.substring(4, 6).toFloat() - 12,
+                            valuesList.first().y
+                        )
+                    )
+                }
+
+                // 마지막 달 넣어주기
+                val currentMonth = calendarInstance.get(Calendar.YEAR).toString() +
+                        (if (calendarInstance.get(Calendar.MONTH) + 1 < 10) "0" else "") + (calendarInstance.get(Calendar.MONTH) + 1)
+                if (monthAverage?.containsKey(currentMonth) == false && valuesList.isNotEmpty()) {
+                    valuesList.add(
+                        Entry(
+                            if (currentMonth[3] == startString[3]) currentMonth.toFloat() - startString.toFloat()
+                            else currentMonth.substring(4, 6).toFloat() - startString.substring(4, 6).toFloat() + 12,
+                            valuesList.last().y
+                        )
+                    )
                 }
 
                 // 차트 셋팅
@@ -109,23 +136,23 @@ class ChartFragment(private val position: Int, private val aptName: String) : Fr
         activity?.let {
             CoroutineScope(Dispatchers.Default).launch {
                 // 실거래가 셋팅 (데이터)
+                val calendarInstance = Calendar.getInstance()
                 val tradeList = DatabaseHelper.getInstance(it)?.getAptDao()?.getAptData(aptName)?.reversed()
-                val filterData = tradeList?.filter { it.areaForExclusiveUse.toString() == selectedArea }
+                val filterData = tradeList?.filter {
+                    it.areaForExclusiveUse.toString() == selectedArea
+                            && (it.dealYear == calendarInstance.get(Calendar.YEAR) ||
+                            ((it.dealYear == calendarInstance.get(Calendar.YEAR) - 1 && it.dealMonth > calendarInstance.get(Calendar.MONTH) + 1)))
+                }
                 val dataSets: ArrayList<ILineDataSet> = ArrayList()
 
                 for (index in 0..1) {
                     val tradeRentData = filterData?.filter { it.isTrade == (index == 0) }
 
                     // 1달 단위로 데이터 평균을 구함
-                    var startString = ""
+                    val startString = (calendarInstance.get(Calendar.YEAR) - 1).toString() +
+                            (if (calendarInstance.get(Calendar.MONTH) + 2 < 10) "0" else "") + (calendarInstance.get(Calendar.MONTH) + 2)
                     val monthAverage = tradeRentData?.groupBy { it.dealYear.toString() + (if (it.dealMonth < 10) "0" else "") + it.dealMonth.toString() }
                     val valuesList = ArrayList<Entry>()
-                    val mapSize = monthAverage?.size ?: 0
-                    if (mapSize > 0) {
-                        monthAverage?.firstNotNullOf {
-                            startString = it.key
-                        }
-                    }
 
                     // 차트에 맞도록 데이터 가공
                     monthAverage?.forEach { month ->
@@ -137,6 +164,31 @@ class ChartFragment(private val position: Int, private val aptName: String) : Fr
                                 else it.deposit.replace(",", "").toDouble()
                             } / month.value.size).toFloat()
                         ))
+                    }
+
+                    // 첫번째 달 넣어주기
+                    if (monthAverage?.containsKey(startString) == false && valuesList.isNotEmpty()) {
+                        valuesList.add(
+                            0,
+                            Entry(
+                                if (startString[3] == startString[3]) startString.toFloat() - startString.toFloat()
+                                else startString.substring(4, 6).toFloat() - startString.substring(4, 6).toFloat() - 12,
+                                valuesList.first().y
+                            )
+                        )
+                    }
+
+                    // 마지막 달 넣어주기
+                    val currentMonth = calendarInstance.get(Calendar.YEAR).toString() +
+                            (if (calendarInstance.get(Calendar.MONTH) + 1 < 10) "0" else "") + (calendarInstance.get(Calendar.MONTH) + 1)
+                    if (monthAverage?.containsKey(currentMonth) == false && valuesList.isNotEmpty()) {
+                        valuesList.add(
+                            Entry(
+                                if (currentMonth[3] == startString[3]) currentMonth.toFloat() - startString.toFloat()
+                                else currentMonth.substring(4, 6).toFloat() - startString.substring(4, 6).toFloat() + 12,
+                                valuesList.last().y
+                            )
+                        )
                     }
 
                     // 차트 셋팅
